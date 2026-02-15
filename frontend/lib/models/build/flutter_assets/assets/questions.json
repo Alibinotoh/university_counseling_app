@@ -1,0 +1,41 @@
+{
+  "sections": [
+    {
+      "title": "MENTAL HEALTH QUALITY",
+      "options": [
+        {"text": "Excellent", "value": 1}, {"text": "Somewhat Good", "value": 2},
+        {"text": "Average", "value": 3}, {"text": "Somewhat Poor", "value": 4}, {"text": "Poor", "value": 5}
+      ],
+      "questions": [
+        "Rate of your mental wellbeing", "Your mood for the past 2 weeks", "Your outlook in life",
+        "Intrapersonal relationship", "Feelings towards your surroundings", "Sleep cycle",
+        "Sleep quality", "Relationship with family", "Relationship with friends", "Physical Health"
+      ]
+    },
+    {
+      "title": "UNIVERSITY LIFE",
+      "options": [
+        {"text": "Yes", "value": 1}, {"text": "No", "value": 5}
+      ],
+      "questions": [
+        "Are you finding it easy to adjust to your new environment?", "Are you happy with your current course?",
+        "Do you feel productive with your course?", "Are you satisfied with your current academic performance?",
+        "Are your professors/ instructors are approachable and understanding?", "Is your allowance sufficient for your needs?",
+        "Do you feel safe and at ease on campus?", "Are you comfortable making new friends at university?",
+        "Have you felt sense of personal growth or development since starting university?", "Do you feel like you have a good work-life balance?"
+      ]
+    },
+    {
+      "title": "SELF",
+      "options": [
+        {"text": "Very Much/Always", "value": 5}, {"text": "Somehow/Sometimes", "value": 3}, {"text": "Not at all/Never", "value": 1}
+      ],
+      "questions": [
+        "Are you having a difficulty coping with your stressors?", "Do people’s perception about you affects you?",
+        "Does your medical health or mental wellbeing limits your daily productivity?", "Do you have trouble sleeping?",
+        "Do you smoke cigarettes/ e-cigars?", "Do you drink liquors?", "Do you get in conflict with your partner or family members?",
+        "Do you feel calmness and happiness?", "Do you feel sad and depress?", "Do you feel angry and aggressive?"
+      ]
+    }
+  ]
+}
