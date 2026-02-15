@@ -45,7 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Include your API routes FIRST
+# 1. API Routes (Always keep these at the top)
 app.include_router(guidance_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 
@@ -53,25 +53,28 @@ app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 def health_check():
     return {"status": "API is online"}
 
-# 2. Define the path to your Flutter build
-# When deployed on Render, the path needs to point to the frontend build folder
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend", "build", "web")
+# 2. Corrected Path Logic for Render
+# This gets the directory where main.py lives (backend/)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# This goes up one level to the root, then into the frontend build
+FRONTEND_DIR = os.path.join(os.path.dirname(CURRENT_DIR), "frontend", "build", "web")
 
-# 3. Mount the static files (images, JS, CSS)
-# This allows the browser to find the assets Flutter needs to run
+# 3. Serving Static Files
+# We mount this to the root so your Flutter app loads immediately
 if os.path.exists(FRONTEND_DIR):
-    app.mount("/main", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+    # Also mount the top-level static files (js, manifest, etc.)
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# 4. Catch-all route to serve index.html for Flutter's SPA routing
+# 4. The SPA Handler (Crucial for Flutter Routing)
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Check if the request is trying to hit an API route that doesn't exist
+    # Ignore API calls so they don't get caught here
     if full_path.startswith("api/"):
-        return {"error": "API route not found"}, 404
-    
+        return {"detail": "Not Found"}, 404
+        
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
     
-    return {"message": "Frontend build not found. Did you run 'flutter build web'?"}
+    return {"error": f"Frontend not found at {FRONTEND_DIR}. Check your folder structure."}
