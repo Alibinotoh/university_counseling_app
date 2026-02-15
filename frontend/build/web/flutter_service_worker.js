@@ -4,8 +4,8 @@ const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
 const RESOURCES = {"favicon.png": "5dcef449791fa27946b3d35ad8803796",
-"flutter_bootstrap.js": "e0226db803562de313fa0d46ae9c5fde",
-"main.dart.js": "42e02ff5192a0e827486608d5ac62898",
+"flutter_bootstrap.js": "fea2ab1964a6045e9440ecf93d426304",
+"main.dart.js": "20d4a4be648eb9ed2b3d0b85ae4287e6",
 "assets/assets/msu_logo.png": "daf65dd4a00fa248e84ae132c4ee69a5",
 "assets/assets/questions.json": "388ad3a0c20598b048180f9161c45445",
 "assets/assets/background.png": "480ed0f6ff86e856116d541fb35609c0",
