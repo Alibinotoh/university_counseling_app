@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: university_counseling_app
+    runtime: python
+    plan: free
+    region: singapore # Closest to the Philippines
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: NEO4J_URI
+        sync: false # Render will ask you for this value in the dashboard
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
