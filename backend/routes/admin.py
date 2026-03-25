@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from models import LoginRequest, ManualSlotRequest
 from controllers.admin_controller import AdminController
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -19,9 +20,6 @@ async def get_stats():
 async def get_slots(counselor_id: str, date: str):
     return AdminController.get_slots_by_date(counselor_id, date)
 
-@router.delete("/slots/{slot_id}")
-async def delete_slot(slot_id: str):
-    return AdminController.delete_slot(slot_id)
 
 @router.post("/slots/manual")
 async def create_manual_slot(data: ManualSlotRequest):
@@ -50,3 +48,30 @@ async def update_appointment_status(
     if not success:
         raise HTTPException(status_code=400, detail="Failed to update status")
     return {"message": f"Appointment {new_status}"}
+
+class BulkSlotRequest(BaseModel):
+    counselor_id: str
+    date: str
+    start_time: str
+    end_time: str
+    slot_duration: int
+
+@router.post("/slots/bulk")
+async def create_bulk_slots(data: BulkSlotRequest):
+    return AdminController.create_bulk_slots(
+        c_id=data.counselor_id,
+        date=data.date,
+        start_time=data.start_time,
+        end_time=data.end_time,
+        duration=data.slot_duration
+    )
+
+@router.delete("/slots/clear")
+async def clear_slots(counselor_id: str, date: str):
+    # Added a print here to make sure the API is actually being called
+    print(f"DEBUG: API received clear request for {counselor_id} on {date}")
+    return AdminController.clear_day_slots(counselor_id, date)
+
+@router.delete("/slots/{slot_id}")
+async def delete_slot(slot_id: str):
+    return AdminController.delete_slot(slot_id)

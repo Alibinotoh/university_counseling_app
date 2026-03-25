@@ -17,105 +17,139 @@ class _LandingPageState extends State<LandingPage> {
   // --- 1. FUNCTION TO SHOW THE STATUS INPUT DIALOG ---
   void _showStatusCheck() {
     final controller = TextEditingController();
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Track Appointment"),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: "Enter Reference Code (e.g. ABCD-1234)",
-            border: OutlineInputBorder(),
-          ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
-            // Inside _showStatusCheck ElevatedButton onPressed
-            onPressed: () async {
-              if (controller.text.isEmpty) return;
-              
-              String enteredRef = controller.text.trim(); // Capture the code
-              
-              try {
-                final statusData = await ApiService.checkAppointmentStatus(enteredRef);
-                if (!mounted) return;
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+          left: 24, right: 24, top: 32
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+            const SizedBox(height: 24),
+            const Text("Track Appointment", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            const Text("Enter your unique reference code below.", style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: controller,
+              style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
+              decoration: InputDecoration(
+                hintText: "E.G. ABCD-1234",
+                hintStyle: const TextStyle(letterSpacing: 0, fontWeight: FontWeight.normal),
+                prefixIcon: const Icon(Icons.qr_code_scanner, color: Color(0xFF800020)),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF800020),
+                minimumSize: const Size(double.infinity, 60),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                elevation: 0,
+              ),
+              onPressed: () async {
+                if (controller.text.isEmpty) return;
+                String enteredRef = controller.text.trim().toUpperCase();
                 
-                Navigator.pop(context); // Close the input dialog
+                showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
                 
-                // FIXED: Pass both the data and the reference code
-                _showStatusResult(statusData, enteredRef); 
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Invalid Reference Code. Please try again."),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text("Check"),
-          )
-        ],
+                try {
+                  final statusData = await ApiService.checkAppointmentStatus(enteredRef);
+                  if (!mounted) return;
+                  Navigator.pop(context); // Remove loader
+                  Navigator.pop(context); // Close BottomSheet
+                  _showStatusResult(statusData, enteredRef);
+                } catch (e) {
+                  Navigator.pop(context); 
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid code.")));
+                }
+              },
+              child: const Text("View Status", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // --- 2. FUNCTION TO DISPLAY THE RETRIEVED STATUS ---
   void _showStatusResult(Map<String, dynamic> data, String refCode) {
-    // Logic to determine color based on status
-    Color statusColor = Colors.orange; // Default for Pending
-    if (data['status'] == 'Confirmed') statusColor = Colors.green;
-    if (data['status'] == 'Rejected') statusColor = Colors.red;
-    if (data['status'] == 'Cancelled') statusColor = Colors.grey;
+    final String status = (data['status'] ?? 'Pending').toString();
+    
+    // Status Logic mapping
+    Color statusColor = Colors.orange;
+    IconData statusIcon = Icons.hourglass_empty;
+    if (status == 'Confirmed') { statusColor = Colors.green; statusIcon = Icons.check_circle; }
+    else if (status == 'Rejected') { statusColor = Colors.red; statusIcon = Icons.cancel; }
+    else if (status == 'Cancelled') { statusColor = Colors.grey; statusIcon = Icons.block; }
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Appointment Details", style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Counselor: ${data['counselor_name'] ?? 'Not Assigned'}"),
-            Text("Date: ${data['date'] ?? 'N/A'}"),
-            Text("Time: ${data['start_time'] ?? 'N/A'} - ${data['end_time'] ?? 'N/A'}"),
-            const Divider(height: 30),
-            
-            // --- NEW: COUNSELOR REMARKS SECTION ---
-            const Text("COUNSELOR REMARKS:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
-            const SizedBox(height: 5),
-            Text(
-              data['notes'] ?? "No additional remarks from the counselor.",
-              style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.black87),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(statusIcon, color: statusColor, size: 20),
+                  const SizedBox(width: 8),
+                  Text(status.toUpperCase(), style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12)),
+                ],
+              ),
             ),
-            
-            const SizedBox(height: 20),
-            const Text("CURRENT STATUS:", style: TextStyle(fontSize: 12, color: Colors.grey)),
-            Text(
-              (data['status'] ?? 'UNKNOWN').toString().toUpperCase(),
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: statusColor),
-            ),
+            const SizedBox(height: 24),
+            _detailRow("Counselor", data['counselor_name'] ?? 'To be assigned'),
+            _detailRow("Date", data['date'] ?? 'N/A'),
+            _detailRow("Time", "${data['start_time']} - ${data['end_time']}"),
+            const Divider(height: 32),
+            const Align(alignment: Alignment.centerLeft, child: Text("REMARKS:", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey))),
+            const SizedBox(height: 8),
+            Text(data['notes'] ?? "No remarks yet.", style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic)),
           ],
         ),
         actions: [
-          // Show Cancel button only for PENDING appointments
-          if (data['status'] == 'Pending')
-            TextButton(
-              onPressed: () => _confirmCancellation(refCode),
-              child: const Text("Cancel Appointment", style: TextStyle(color: Colors.red)),
-            ),
-            
-          // Show Receipt button only for CONFIRMED appointments
-          if (data['status'] == 'Confirmed')
-            TextButton.icon(
+          if (status == 'Pending')
+            TextButton(onPressed: () => _confirmCancellation(refCode), child: const Text("Cancel Appointment", style: TextStyle(color: Colors.red))),
+          if (status == 'Confirmed')
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () => _generateAppointmentReceipt(data, refCode),
-              icon: const Icon(Icons.receipt_long, color: Colors.green),
-              label: const Text("Receipt", style: TextStyle(color: Colors.green)),
+              icon: const Icon(Icons.receipt_long, size: 18, color: Colors.white),
+              label: const Text("View Receipt", style: TextStyle(color: Colors.white)),
             ),
-            
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close")),
+        ],
+      ),
+    );
+  }
+
+  // Helper for rows
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ],
       ),
     );
@@ -126,50 +160,40 @@ class _LandingPageState extends State<LandingPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), // Sharp ticket edges
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
-            const SizedBox(height: 10),
-            const Text("OFFICIAL RECEIPT", 
-                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2, color: Color(0xFF800020))),
-            const Divider(thickness: 1.5),
-            const SizedBox(height: 10),
-            _receiptRow("Ref Code:", refCode),
-            _receiptRow("Counselor:", data['counselor_name'] ?? 'Not Assigned'),
-            _receiptRow("Date:", data['date'] ?? 'N/A'),
-            _receiptRow("Time:", "${data['start_time'] ?? 'N/A'} - ${data['end_time'] ?? 'N/A'}"),
+            const Text("MSU-TCTO", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+            const Text("GUIDANCE & COUNSELING OFFICE", style: TextStyle(fontSize: 9, letterSpacing: 1.5)),
+            const SizedBox(height: 15),
+            const Text("********************************", style: TextStyle(color: Colors.grey)),
+            const Text("OFFICIAL APPOINTMENT SLIP", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            const Text("********************************", style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 20),
+            _receiptLine("REF CODE", refCode),
+            _receiptLine("DATE", data['date']),
+            _receiptLine("TIME", "${data['start_time']} - ${data['end_time']}"),
+            _receiptLine("COUNSELOR", data['counselor_name']),
+            const SizedBox(height: 20),
             const Divider(),
-            const SizedBox(height: 10),
-            const Text(
-              "Please present this receipt or a screenshot upon arrival at the MSU-TCTO Guidance Office.",
-              textAlign: TextAlign.center, 
-              style: TextStyle(fontSize: 10, color: Colors.grey, fontStyle: FontStyle.italic)
-            ),
+            const Text("Present this slip or a screenshot upon arrival.", textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic)),
           ],
         ),
-        actions: [
-          Center(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context), 
-              child: const Text("Done", style: TextStyle(fontWeight: FontWeight.bold))
-            ),
-          ),
-        ],
+        actions: [Center(child: TextButton(onPressed: () => Navigator.pop(context), child: const Text("DONE", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black))))],
       ),
     );
   }
 
-  Widget _receiptRow(String label, String value) {
+  Widget _receiptLine(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(label, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+          Text(value.toString().toUpperCase(), style: const TextStyle(fontFamily: 'monospace', fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );

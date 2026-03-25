@@ -4,10 +4,10 @@ def seed_admin():
     query = """
     MERGE (c:Counselor {id: "admin_001"})
     ON CREATE SET 
-        c.name = "Dr. Razii Lamzon",
-        c.email = "razii.lamzon@msu.edu.ph",
+        c.name = "Doc. Jay",
+        c.email = "doc.jay@msu.edu",
         c.specialty = "Clinical Psychology & Mental Health",
-        c.password = "Admin@123",
+        c.password = "admin123",
         c.role = "Admin"
     RETURN c.name
     """

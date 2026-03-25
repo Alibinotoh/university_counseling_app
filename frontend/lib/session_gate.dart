@@ -22,27 +22,24 @@ class _SessionGateState extends State<SessionGate> {
   }
 
   Future<void> _checkSession() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.reload(); // Always reload on refresh to get latest browser state
 
-      final token = prefs.getString('admin_token');
-      final data = prefs.getString('admin_data');
+  final token = prefs.getString('admin_token');
+  final data = prefs.getString('admin_data');
 
-      // ✅ Require BOTH token and data
-      if (token != null && data != null) {
+  if (mounted) {
+    setState(() {
+      // Check that it's not null AND not an empty string
+      if (token != null && data != null && token.isNotEmpty) {
         adminData = jsonDecode(data);
       } else {
         adminData = null;
       }
-    } catch (e) {
-      // ❌ If JSON is broken or prefs fail
-      adminData = null;
-    }
-
-    if (mounted) {
-      setState(() => loading = false);
-    }
+      loading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
