@@ -158,18 +158,24 @@ class AdminController:
     def get_all_appointments():
         query = """
         MATCH (ap:Appointment)-[:BOOKED_FOR]->(ts:TimeSlot)
+        // Check for linked assessment
+        OPTIONAL MATCH (as:Assessment)-[:RESULTED_IN]->(ap)
         RETURN elementId(ap) as id, 
             ap.full_name as student_name, 
             ap.user_type as type,
-            ap.email as email,      // Added credential
-            ap.contact as contact,  // Added credential
-            ap.reason as reason,    // Added credential
+            ap.email as email,
+            ap.contact as contact,
+            ap.reason as reason,
             ap.status as status, 
-            ap.counselor_notes as notes, // Retrieve notes
-            ap.timestamp as timestamp,  // <--- ADD THIS LINE
+            ap.counselor_notes as notes,
+            ap.timestamp as timestamp,
             ts.date as date, 
             ts.start_time as time,
-            ap.reference_code as ref_code
+            ap.reference_code as ref_code,
+            as.id as assessment_id,
+            as.final_score as assessment_score,
+            as.stress_level as assessment_level,
+            as.raw_answers as assessment_answers
         ORDER BY ap.timestamp DESC
         """
         with driver.session() as session:
@@ -274,3 +280,26 @@ class AdminController:
         except Exception as e:
             print(f"--- [ERROR] {e} ---")
             return {"status": "error", "message": str(e), "deleted_count": 0}
+
+
+    @staticmethod
+    def get_all_assessment_logs():
+        query = """
+        MATCH (a:Assessment)
+        // Check if this assessment led to an appointment
+        OPTIONAL MATCH (a)-[:RESULTED_IN]->(ap:Appointment)
+        RETURN a.id as id, 
+               a.user_type as type, 
+               a.final_score as score, 
+               a.stress_level as level, 
+               toString (a.timestamp) as date, 
+               a.raw_answers as answers,
+               // If linked, use the Appointment name; otherwise use Assessment name
+               coalesce(ap.full_name, a.user_name) as display_name,
+               (ap IS NOT NULL) as is_linked,
+               ap.reference_code as linked_ref
+        ORDER BY a.timestamp DESC
+        """
+        with driver.session() as session:
+            result = session.run(query)
+            return [dict(record) for record in result]

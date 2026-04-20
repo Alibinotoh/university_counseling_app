@@ -12,7 +12,6 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  int _adminTapCount = 0; // Tracks taps for the hidden trigger
 
   // --- 1. FUNCTION TO SHOW THE STATUS INPUT DIALOG ---
   void _showStatusCheck() {
@@ -231,16 +230,51 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  // --- REST OF YOUR UI REMAINS THE SAME ---
-  void _handleAdminTrigger() {
-    _adminTapCount++;
-    if (_adminTapCount >= 5) {
-      _adminTapCount = 0;
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
-      );
-    }
+  void _showAppointmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 24),
+            const Text("Appointments", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 24),
+            
+            // Option 1: Book New
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFFFEBEE), child: Icon(Icons.add, color: Colors.redAccent)),
+              title: const Text("Book New Appointment", style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text("Schedule a new counseling session"),
+              onTap: () {
+                Navigator.pop(context); // Close sheet
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const BookingScreen()));
+              },
+            ),
+            const Divider(),
+            
+            // Option 2: Track Status
+            ListTile(
+              leading: const CircleAvatar(backgroundColor: Color(0xFFE8EAF6), child: Icon(Icons.track_changes, color: Colors.indigo)),
+              title: const Text("Track Status", style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text("View your existing appointment details"),
+              onTap: () {
+                Navigator.pop(context); // Close sheet
+                _showStatusCheck(); // Calls your existing tracking logic
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -248,34 +282,15 @@ class _LandingPageState extends State<LandingPage> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset('assets/background.png', fit: BoxFit.cover),
-          ),
+          Positioned.fill(child: Image.asset('assets/background.png', fit: BoxFit.cover)),
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.6),
-                  ],
+                  colors: [Colors.black.withOpacity(0.3), Colors.black.withOpacity(0.6)],
                 ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.fact_check_outlined, color: Colors.white),
-                onPressed: _showStatusCheck,
               ),
             ),
           ),
@@ -285,66 +300,48 @@ class _LandingPageState extends State<LandingPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    GestureDetector(
-                      onTap: _handleAdminTrigger,
-                      child: Container(
-                        height: 120,
-                        width: 120,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: Image.asset('assets/msu_logo.png'),
-                        ),
-                      ),
+                    // --- LOGO (White circle removed) ---
+                    Image.asset(
+                      'assets/msu_logo.jpg', 
+                      height: 140, // Slightly larger since the white ring is gone
+                      width: 140,
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      "MSU-TCTO",
-                      style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-                    ),
-                    const Text(
-                      "Guidance & Counseling",
-                      style: TextStyle(color: Colors.white, fontSize: 24),
-                    ),
+                    const Text("Guidance and Counseling", style: TextStyle(color: Colors.white, fontSize: 24)),
                     const SizedBox(height: 8),
-                    const Text(
-                      "Your mental health matters.",
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
+                    const Text("Your mental health matters.", style: TextStyle(color: Colors.white70, fontSize: 16)),
                     const SizedBox(height: 40),
+
                     _buildMenuCard(
                       title: "Self-Assessment",
                       subtitle: "Take a quick assessment to understand your mental health",
                       icon: Icons.assignment_outlined,
                       iconColor: Colors.deepPurple,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AssessmentScreen()),
-                        );
-                      },
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AssessmentScreen())),
                     ),
                     const SizedBox(height: 16),
+
                     _buildMenuCard(
-                      title: "Book Appointment",
-                      subtitle: "Schedule a session with our counselors",
+                      title: "Appointments",
+                      subtitle: "Book a new session or track your status",
                       icon: Icons.calendar_today_outlined,
                       iconColor: Colors.redAccent,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const BookingScreen()),
-                        );
-                      },
+                      onTap: _showAppointmentOptions,
                     ),
+                    const SizedBox(height: 24), // More breathing room before admin
+
+                    // --- ADMIN PORTAL (Made smaller) ---
+                    _buildMenuCard(
+                      title: "Admin Portal",
+                      subtitle: "Authorized personnel only",
+                      icon: Icons.admin_panel_settings_outlined,
+                      iconColor: Colors.blueGrey,
+                      isSmall: true, // Custom flag to shrink it
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminLoginScreen())),
+                    ),
+
                     const SizedBox(height: 40),
-                    const Text(
-                      "All Information is confidential",
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
-                    ),
+                    const Text("All Information is confidential", style: TextStyle(color: Colors.white54, fontSize: 12)),
                   ],
                 ),
               ),
@@ -361,39 +358,53 @@ class _LandingPageState extends State<LandingPage> {
     required IconData icon,
     required Color iconColor,
     required VoidCallback onTap,
+    bool isSmall = false, // Default is false
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 40 : 25), // Slimmer width if small
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isSmall ? 12 : 20), // Less padding for admin
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(25),
+            color: Colors.white.withOpacity(isSmall ? 0.7 : 0.9), // Slightly more transparent if small
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(isSmall ? 8 : 12),
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: iconColor, size: 30),
+                child: Icon(icon, color: iconColor, size: isSmall ? 20 : 30),
               ),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                    Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    Text(
+                      title, 
+                      style: TextStyle(
+                        fontSize: isSmall ? 15 : 18, 
+                        fontWeight: FontWeight.bold, 
+                        color: Colors.black87
+                      )
+                    ),
+                    Text(
+                      subtitle, 
+                      style: TextStyle(
+                        fontSize: isSmall ? 10 : 12, 
+                        color: Colors.black54
+                      )
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.black26),
+              Icon(Icons.chevron_right, color: Colors.black26, size: isSmall ? 18 : 24),
             ],
           ),
         ),

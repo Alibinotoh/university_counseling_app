@@ -1,11 +1,11 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
-# Anonymous Assessment Model
+# Identified Assessment Model
 class AssessmentSubmit(BaseModel):
+    user_name: Optional[str] = "Anonymous" # Added this
     user_type: str  # "Student" or "Employee"
-    # CHANGE THIS: Use List[List[int]] to accept the 3 sections
-    scores: List[List[int]] 
+    scores: List[List[int]]
 
 # Identified Appointment Model
 class AppointmentBook(BaseModel):

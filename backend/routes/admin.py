@@ -75,3 +75,9 @@ async def clear_slots(counselor_id: str, date: str):
 @router.delete("/slots/{slot_id}")
 async def delete_slot(slot_id: str):
     return AdminController.delete_slot(slot_id)
+
+# In routes/admin.py (or whatever your admin route file is named)
+@router.get("/assessment-logs") # If the prefix is already /admin
+async def get_assessment_logs():
+    # Make sure you are pointing to the ADMIN controller now
+    return AdminController.get_all_assessment_logs()

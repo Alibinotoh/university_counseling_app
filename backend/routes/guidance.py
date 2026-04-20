@@ -8,7 +8,8 @@ router = APIRouter()
 
 @router.post("/assessment/submit")
 async def submit_assessment(data: AssessmentSubmit):
-    return GuidanceController.handle_assessment(data.user_type, data.scores)
+    # Pass user_name to the controller
+    return GuidanceController.handle_assessment(data.user_type, data.scores, data.user_name)
 
 @router.post("/appointment/book")
 async def book_appointment(data: AppointmentBook):

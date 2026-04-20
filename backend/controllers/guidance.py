@@ -9,7 +9,7 @@ def generate_ref_code():
 
 class GuidanceController:
     @staticmethod
-    def handle_assessment(user_type, section_scores):
+    def handle_assessment(user_type, section_scores, user_name="Anonymous"): # Added user_name
         s1_avg = sum(section_scores[0]) / 10
         s2_avg = sum(section_scores[1]) / 10
         
@@ -31,16 +31,19 @@ class GuidanceController:
             level = "Low"
             warning = False
         
-        # Save to Neo4j
+        # Save to Neo4j with the name field
         with driver.session() as session:
             session.run("""
                 CREATE (a:Assessment {
-                    id: randomUUID(),  
+                    id: randomUUID(),
+                    user_name: $un,       // Store the user's name
+                    user_type: $ut,
                     final_score: $fs, 
                     stress_level: $l, 
+                    raw_answers: $answers,
                     timestamp: datetime()
                 })
-            """, fs=rounded_score, l=level)
+            """, un=user_name, ut=user_type, fs=rounded_score, l=level, answers=str(section_scores))
         
         return {
             "stress_level": level,
@@ -51,9 +54,12 @@ class GuidanceController:
     @staticmethod
     def handle_booking(data, ref_code):
         query = """
+        // 1. Match the Counselor and Slot
         MATCH (c:Counselor {id: $c_id})-[:HAS_SLOT]->(ts:TimeSlot {id: $ts_id})
         WHERE ts.is_available = true
         SET ts.is_available = false
+
+        // 2. Create the Appointment
         CREATE (ap:Appointment {
             reference_code: $ref, 
             full_name: $name, 
@@ -64,8 +70,21 @@ class GuidanceController:
             status: 'Pending', 
             timestamp: datetime()
         })
+
+        // 3. Link Appointment to Counselor and Slot
         CREATE (ap)-[:BOOKED_FOR]->(ts)
         CREATE (ap)-[:WITH_COUNSELOR]->(c)
+
+        // 4. NEW: Link Appointment to the User's latest Assessment
+        WITH ap
+        OPTIONAL MATCH (as:Assessment {user_name: $name})
+        WITH ap, as
+        ORDER BY as.timestamp DESC
+        LIMIT 1
+        FOREACH (_ IN CASE WHEN as IS NOT NULL THEN [1] ELSE [] END |
+            CREATE (as)-[:RESULTED_IN]->(ap)
+        )
+
         RETURN ap.reference_code as ref
         """
         with driver.session() as session:

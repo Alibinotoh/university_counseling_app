@@ -352,7 +352,9 @@ import 'package:share_plus/share_plus.dart';
 
 class BookingScreen extends StatefulWidget {
   final String? initialReason;
-  const BookingScreen({super.key, this.initialReason});
+  final String? initialName; // Add this
+
+  const BookingScreen({super.key, this.initialReason, this.initialName});
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
@@ -362,10 +364,11 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   
-  final _nameController = TextEditingController();
+  late TextEditingController _nameController;
   final _emailController = TextEditingController();
   final _contactController = TextEditingController(); 
   late TextEditingController _reasonController;  
+ 
   
   String _userType = "Student";
   List<dynamic> _counselors = []; 
@@ -378,11 +381,13 @@ class _BookingScreenState extends State<BookingScreen> with SingleTickerProvider
   final Color primaryColor = const Color(0xFF800020); // Burgundy branding
 
   @override
-  void initState() {
-    super.initState();
-    _reasonController = TextEditingController(text: widget.initialReason ?? "");
-    _fetchCounselors();
-  }
+    void initState() {
+      super.initState();
+      // Pre-fill the name controller from the assessment results
+      _nameController = TextEditingController(text: widget.initialName ?? "");
+      _reasonController = TextEditingController(text: widget.initialReason ?? "");
+      _fetchCounselors();
+    }
 
   @override
   void dispose() {

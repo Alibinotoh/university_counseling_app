@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class ApiService {
-  // static const String baseUrl = "http://127.0.0.1:8000/api/v1";
+  //static const String baseUrl = "http://127.0.0.1:8000/api/v1";
   static const String baseUrl = "https://university-counseling-app.onrender.com/api/v1";
 
   // --- MODIFIED: GETS ALL TREND DATA (HIGH, MOD, LOW) ---
@@ -32,12 +32,16 @@ class ApiService {
     }
   }
 
-  // --- SUBMIT ASSESSMENT ---
-  static Future<Map<String, dynamic>> submitAssessment(String type, List<List<int>> scores) async {
+  // --- SUBMIT ASSESSMENT (Modified to include userName) ---
+  static Future<Map<String, dynamic>> submitAssessment(String userName, List<List<int>> scores) async {
     final response = await http.post(
       Uri.parse("$baseUrl/assessment/submit"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"user_type": type, "scores": scores}),
+      body: jsonEncode({
+        "user_name": userName, // This matches your Pydantic model
+        "user_type": "User",    // Generalized type
+        "scores": scores
+      }),
     );
     return jsonDecode(response.body);
   }
@@ -221,6 +225,15 @@ class ApiService {
       return jsonDecode(response.body); 
     } else {
       throw Exception("Failed to clear slots: ${response.body}");
+    }
+  }
+
+  static Future<List<dynamic>> getAssessmentLogs() async {
+    final response = await http.get(Uri.parse('$baseUrl/admin/assessment-logs'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Failed to load logs");
     }
   }
 }
