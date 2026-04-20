@@ -4,9 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class ApiService {
-  //static const String baseUrl = "http://127.0.0.1:8000/api/v1";
-  static const String baseUrl = "https://university-counseling-app.onrender.com/api/v1";
-
+  // --- AUTOMATIC URL SWITCHING ---
+  // When you run 'flutter run', it uses localhost.
+  // When you run 'flutter build web' and deploy to Render, it uses the live URL.
+  static String get baseUrl {
+    if (kDebugMode) {
+      return "http://127.0.0.1:8000/api/v1";
+    } else {
+      return "https://university-counseling-app.onrender.com/api/v1";
+    }
+  }
   // --- MODIFIED: GETS ALL TREND DATA (HIGH, MOD, LOW) ---
   static Future<Map<String, dynamic>> getStressStats() async {
     try {
