@@ -29348,7 +29348,7 @@ Km(){var s=0,r=A.L(t.P),q,p=2,o=[],n,m,l,k,j
 var $async$Km=A.M(function(a,b){if(a===1){o.push(b)
 s=p}while(true)switch(s){case 0:p=4
 s=7
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/admin/stats/stress",0,null)),$async$Km)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/stats/stress",0,null)),$async$Km)
 case 7:n=b
 if(n.b===200){l=n
 l=B.a2.hp(A.hr(A.hp(l.e)).cl(l.w),null)
@@ -29375,7 +29375,7 @@ case 2:return A.I(o.at(-1),r)}})
 return A.K($async$Km,r)},
 a19(a,b){var s=0,r=A.L(t.P),q,p,o,n,m
 var $async$a19=A.M(function(c,d){if(c===1)return A.I(d,r)
-while(true)switch(s){case 0:p=A.dj("http://127.0.0.1:8000/api/v1/assessment/submit",0,null)
+while(true)switch(s){case 0:p=A.dj("https://university-counseling-app.onrender.com/api/v1/assessment/submit",0,null)
 o=t.N
 n=A.al(["Content-Type","application/json"],o,o)
 s=3
@@ -29388,7 +29388,7 @@ case 1:return A.J(q,r)}})
 return A.K($async$a19,r)},
 a1_(a,b,c,d,e,f,g){var s=0,r=A.L(t.P),q,p,o,n,m
 var $async$a1_=A.M(function(h,i){if(h===1)return A.I(i,r)
-while(true)switch(s){case 0:p=A.dj("http://127.0.0.1:8000/api/v1/appointment/book",0,null)
+while(true)switch(s){case 0:p=A.dj("https://university-counseling-app.onrender.com/api/v1/appointment/book",0,null)
 o=t.N
 n=A.al(["Content-Type","application/json"],o,o)
 s=3
@@ -29402,7 +29402,7 @@ case 1:return A.J(q,r)}})
 return A.K($async$a1_,r)},
 ti(a,b){var s=0,r=A.L(t.P),q,p,o,n,m,l,k
 var $async$ti=A.M(function(c,d){if(c===1)return A.I(d,r)
-while(true)switch(s){case 0:n=A.dj("http://127.0.0.1:8000/api/v1/admin/login",0,null)
+while(true)switch(s){case 0:n=A.dj("https://university-counseling-app.onrender.com/api/v1/admin/login",0,null)
 m=t.N
 l=A.al(["Content-Type","application/json"],m,m)
 s=3
@@ -29430,7 +29430,7 @@ return A.K($async$ti,r)},
 Kl(a,b){var s=0,r=A.L(t.j),q,p
 var $async$Kl=A.M(function(c,d){if(c===1)return A.I(d,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/admin/slots?counselor_id="+a+"&date="+b,0,null)),$async$Kl)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/slots?counselor_id="+a+"&date="+b,0,null)),$async$Kl)
 case 3:p=d
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29440,7 +29440,7 @@ return A.K($async$Kl,r)},
 a14(a){var s=0,r=A.L(t.P),q,p
 var $async$a14=A.M(function(b,c){if(b===1)return A.I(c,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.aEF(A.dj("http://127.0.0.1:8000/api/v1/admin/slots/"+a,0,null)),$async$a14)
+return A.O(A.aEF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/slots/"+a,0,null)),$async$a14)
 case 3:p=c
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29449,7 +29449,7 @@ case 1:return A.J(q,r)}})
 return A.K($async$a14,r)},
 a13(a,b,c,d){var s=0,r=A.L(t.P),q,p,o,n,m
 var $async$a13=A.M(function(e,f){if(e===1)return A.I(f,r)
-while(true)switch(s){case 0:p=A.dj("http://127.0.0.1:8000/api/v1/admin/slots/manual",0,null)
+while(true)switch(s){case 0:p=A.dj("https://university-counseling-app.onrender.com/api/v1/admin/slots/manual",0,null)
 o=t.N
 n=A.al(["Content-Type","application/json"],o,o)
 s=3
@@ -29464,7 +29464,7 @@ return A.K($async$a13,r)},
 a11(a){var s=0,r=A.L(t.P),q,p
 var $async$a11=A.M(function(b,c){if(b===1)return A.I(c,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/appointment/status/"+a,0,null)),$async$a11)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/appointment/status/"+a,0,null)),$async$a11)
 case 3:p=c
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29474,14 +29474,14 @@ return A.K($async$a11,r)},
 a10(a){var s=0,r=A.L(t.H)
 var $async$a10=A.M(function(b,c){if(b===1)return A.I(c,r)
 while(true)switch(s){case 0:s=2
-return A.O(A.xT(A.dj("http://127.0.0.1:8000/api/v1/appointment/cancel/"+a,0,null),null,null),$async$a10)
+return A.O(A.xT(A.dj("https://university-counseling-app.onrender.com/api/v1/appointment/cancel/"+a,0,null),null,null),$async$a10)
 case 2:if(c.b!==200)throw A.i(A.cF("Failed to cancel appointment"))
 return A.J(null,r)}})
 return A.K($async$a10,r)},
 a17(){var s=0,r=A.L(t.j),q,p
 var $async$a17=A.M(function(a,b){if(a===1)return A.I(b,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/counselors",0,null)),$async$a17)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/counselors",0,null)),$async$a17)
 case 3:p=b
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29491,7 +29491,7 @@ return A.K($async$a17,r)},
 a16(){var s=0,r=A.L(t.j),q,p
 var $async$a16=A.M(function(a,b){if(a===1)return A.I(b,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/admin/appointments/all",0,null)),$async$a16)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/appointments/all",0,null)),$async$a16)
 case 3:p=b
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29501,7 +29501,7 @@ return A.K($async$a16,r)},
 a1a(a,b,c){var s=0,r=A.L(t.P),q,p
 var $async$a1a=A.M(function(d,e){if(d===1)return A.I(e,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.xT(A.dj("http://127.0.0.1:8000/api/v1/admin/appointments/decision?appointment_id="+a+"&new_status="+b+"&notes="+A.t_(2,c,B.ae,!1),0,null),null,null),$async$a1a)
+return A.O(A.xT(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/appointments/decision?appointment_id="+a+"&new_status="+b+"&notes="+A.t_(2,c,B.ae,!1),0,null),null,null),$async$a1a)
 case 3:p=e
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29510,7 +29510,7 @@ case 1:return A.J(q,r)}})
 return A.K($async$a1a,r)},
 a15(a,b,c,d,e){var s=0,r=A.L(t.P),q,p,o,n,m
 var $async$a15=A.M(function(f,g){if(f===1)return A.I(g,r)
-while(true)switch(s){case 0:p=A.dj("http://127.0.0.1:8000/api/v1/admin/slots/bulk",0,null)
+while(true)switch(s){case 0:p=A.dj("https://university-counseling-app.onrender.com/api/v1/admin/slots/bulk",0,null)
 o=t.N
 n=A.al(["Content-Type","application/json"],o,o)
 s=3
@@ -29525,7 +29525,7 @@ return A.K($async$a15,r)},
 a12(a,b){var s=0,r=A.L(t.P),q,p
 var $async$a12=A.M(function(c,d){if(c===1)return A.I(d,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.aEF(A.dj("http://127.0.0.1:8000/api/v1/admin/slots/clear",0,null).a_F(A.al(["counselor_id",B.c.fJ(a),"date",B.c.fJ(b)],t.N,t.z))),$async$a12)
+return A.O(A.aEF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/slots/clear",0,null).a_F(A.al(["counselor_id",B.c.fJ(a),"date",B.c.fJ(b)],t.N,t.z))),$async$a12)
 case 3:p=d
 if(p.b===200){q=B.a2.hp(A.hr(A.hp(p.e)).cl(p.w),null)
 s=1
@@ -29535,7 +29535,7 @@ return A.K($async$a12,r)},
 a18(){var s=0,r=A.L(t.j),q,p
 var $async$a18=A.M(function(a,b){if(a===1)return A.I(b,r)
 while(true)switch(s){case 0:s=3
-return A.O(A.JF(A.dj("http://127.0.0.1:8000/api/v1/admin/assessment-logs",0,null)),$async$a18)
+return A.O(A.JF(A.dj("https://university-counseling-app.onrender.com/api/v1/admin/assessment-logs",0,null)),$async$a18)
 case 3:p=b
 if(p.b===200){q=B.a2.cl(A.hr(A.hp(p.e)).cl(p.w))
 s=1
