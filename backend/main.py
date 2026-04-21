@@ -102,28 +102,23 @@ FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "bui
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# 6. SPA & ASSET HANDLER
+# Updated Section 6 in main.py
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # Attempt 1: Look in the root of build/web (for .js, .json, etc.)
+    # Attempt 1: Standard path
     file_path = os.path.join(FRONTEND_DIR, full_path)
     
-    # Attempt 2: Handle the "Double Asset" Flutter Web quirk
-    # If the browser asks for assets/msu_logo.jpg, it's actually at assets/assets/msu_logo.jpg
-    if not os.path.exists(file_path) and full_path.startswith("assets/"):
-        # We inject the extra 'assets' folder that Flutter creates in build/web
-        relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
-        file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
+    # Attempt 2: Flutter's nested asset path fix
+    if not os.path.exists(file_path) and "assets/" in full_path:
+        # If looking for assets/logo.jpg, check assets/assets/logo.jpg
+        relative_path = full_path.replace("assets/", "assets/assets/", 1)
+        file_path = os.path.join(FRONTEND_DIR, relative_path)
 
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # FALLBACK: Return index.html for Flutter SPA routing
-    index_file = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    
-    return {"error": "Frontend build not found."}
+    # Fallback to index.html
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
