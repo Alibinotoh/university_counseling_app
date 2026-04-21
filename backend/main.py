@@ -102,23 +102,28 @@ FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "bui
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# Updated Section 6 in main.py
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
+    # 1. Prevent API routes from being handled here
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # Attempt 1: Standard path
+    # 2. Check the standard path first (for .js and .html files)
     file_path = os.path.join(FRONTEND_DIR, full_path)
     
-    # Attempt 2: Flutter's nested asset path fix
+    # 3. THE LOGO FIX: Handle the Flutter 'Double Assets' folder
+    # If the file isn't found and the path includes "assets/", look one level deeper
     if not os.path.exists(file_path) and "assets/" in full_path:
-        # If looking for assets/logo.jpg, check assets/assets/logo.jpg
-        relative_path = full_path.replace("assets/", "assets/assets/", 1)
-        file_path = os.path.join(FRONTEND_DIR, relative_path)
+        # This changes 'assets/msu_logo.jpg' to 'assets/assets/msu_logo.jpg'
+        relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
+        file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
 
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # Fallback to index.html
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    # 4. Fallback to index.html for Single Page App routing
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    
+    return {"error": "File not found."}
