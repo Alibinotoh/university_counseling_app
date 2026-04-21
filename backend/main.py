@@ -105,24 +105,25 @@ if os.path.exists(FRONTEND_DIR):
 # 6. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Ignore API calls to prevent 404 confusion
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # Check if the requested path is an actual file (e.g., main.dart.js)
+    # Attempt 1: Look in the root of build/web (for .js, .json, etc.)
     file_path = os.path.join(FRONTEND_DIR, full_path)
     
-    # LOGO FIX: Flutter Web often nests assets inside assets/assets/
-    # This logic checks both locations to ensure images load correctly
-    if not os.path.exists(file_path) and "assets/" in full_path:
-        file_path = os.path.join(FRONTEND_DIR, "assets", full_path)
+    # Attempt 2: Handle the "Double Asset" Flutter Web quirk
+    # If the browser asks for assets/msu_logo.jpg, it's actually at assets/assets/msu_logo.jpg
+    if not os.path.exists(file_path) and full_path.startswith("assets/"):
+        # We inject the extra 'assets' folder that Flutter creates in build/web
+        relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
+        file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
 
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # FALLBACK: Serve index.html for all other routes (Standard SPA behavior)
+    # FALLBACK: Return index.html for Flutter SPA routing
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
     
-    return {"error": "Frontend build not found. Verify your deployment structure."}
+    return {"error": "Frontend build not found."}
