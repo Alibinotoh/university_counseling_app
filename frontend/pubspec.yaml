@@ -63,7 +63,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/background.png  # Replace with your actual filename
-    - assets/msu_logo.jpg
+    - assets/msu_logo.png
     - assets/questions.json
   # To add assets to your application, add an assets section, like this:
   # assets:

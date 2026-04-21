@@ -302,7 +302,7 @@ class _LandingPageState extends State<LandingPage> {
                   children: [
                     // --- LOGO (White circle removed) ---
                     Image.asset(
-                      'assets/msu_logo.jpg', 
+                      'assets/msu_logo.png', 
                       height: 140, // Slightly larger since the white ring is gone
                       width: 140,
                     ),
