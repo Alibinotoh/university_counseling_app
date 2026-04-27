@@ -104,27 +104,29 @@ if os.path.exists(FRONTEND_DIR):
 # 6. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Prevent API routes from being handled as static files
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # Attempt 1: Check the standard path (main.dart.js, index.html, etc.)
     file_path = os.path.join(FRONTEND_DIR, full_path)
     
-    # Attempt 2: Handle the Flutter 'Double Assets' folder quirk
-    # Flutter Web often places assets in /assets/assets/ instead of just /assets/
+    # NEW: Extremely aggressive check for the logo
+    if "msu_logo.png" in full_path:
+        # Check standard, then double-nested, then absolute nested
+        possible_paths = [
+            os.path.join(FRONTEND_DIR, "assets", "msu_logo.png"),
+            os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png"),
+            os.path.join(FRONTEND_DIR, "msu_logo.png")
+        ]
+        for path in possible_paths:
+            if os.path.isfile(path):
+                return FileResponse(path)
+
+    # Standard double-asset fix for other assets (like background)
     if not os.path.exists(file_path) and "assets/" in full_path:
-        # If full_path is 'assets/msu_logo.png', try 'assets/assets/msu_logo.png'
         relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
         file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
 
-    # If the file exists after both attempts, serve it
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # Fallback: Serve index.html for Single Page App (SPA) routing
-    index_file = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    
-    return {"error": "File not found. Verify your frontend build exists."}
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
