@@ -69,7 +69,6 @@ from routes.guidance import router as guidance_router
 from routes.admin import router as admin_router
 
 # 1. MIME TYPE ENFORCEMENT
-# This stops the "text/html is not a valid JavaScript MIME type" error (White Screen Fix)
 mimetypes.init()
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
@@ -86,8 +85,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. API ROUTES (Must remain AT THE TOP)
-# By keeping these here, FastAPI checks these doors BEFORE looking at files.
+# 3. API ROUTES
 app.include_router(guidance_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 
@@ -95,26 +93,35 @@ app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 def health_check():
     return {"status": "API is online"}
 
-# 4. RENDER-READY PATH LOGIC
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Points to the web build folder relative to backend/main.py
-FRONTEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
+# 4. RENDER-READY PATH LOGIC (The "White Screen" Killer)
+# We use absolute paths to ensure the server doesn't get lost
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # This is /backend
+BASE_DIR = os.path.dirname(CURRENT_DIR) # This is the project root
+
+# Path 1: Standard structure (root/frontend/build/web)
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend", "build", "web")
+
+# Path 2: Fallback (sometimes Render flat-packs or uses different workdirs)
+if not os.path.exists(os.path.join(FRONTEND_DIR, "index.html")):
+    FRONTEND_DIR = os.path.join(CURRENT_DIR, "..", "frontend", "build", "web")
+
+print(f"--- LOG: Searching for frontend at: {FRONTEND_DIR} ---")
 
 # 5. STATIC FILES MOUNT
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# We point this to the /assets folder specifically to help Flutter find images
+ASSETS_DIR = os.path.join(FRONTEND_DIR, "assets")
+if os.path.exists(ASSETS_DIR):
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
 # 6. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # CRITICAL: If the URL starts with api/, but reached this function, 
-    # it means the route doesn't exist. We return 404, NOT index.html.
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
     # --- LOGO INTERCEPTOR ---
-    # This fixes the .jpg vs .png loop by forcing the PNG file
     if "msu_logo" in full_path.lower():
+        # Look in the double-nested assets folder
         logo_path = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
         if os.path.isfile(logo_path):
             return FileResponse(logo_path, media_type="image/png")
@@ -123,7 +130,6 @@ async def serve_spa(full_path: str):
 
     # 7. SERVE ACTUAL FILES (JS, CSS, etc.)
     if os.path.isfile(file_path):
-        # Explicitly set JS type to kill the white screen error
         if file_path.endswith(".js") or file_path.endswith(".mjs"):
             return FileResponse(file_path, media_type="application/javascript")
         return FileResponse(file_path)
@@ -133,7 +139,7 @@ async def serve_spa(full_path: str):
     if "assets/" in full_path and os.path.isfile(nested_path):
         return FileResponse(nested_path)
 
-    # 9. SPA FALLBACK (Serve index.html for everything else)
+    # 9. SPA FALLBACK
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.isfile(index_file):
         return FileResponse(index_file)
