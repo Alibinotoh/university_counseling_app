@@ -104,26 +104,24 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # --- NEW LOGO ALIAS LOGIC ---
-    # Even if the browser is old and asks for .jpg, we serve the .png
-    if "msu_logo" in full_path:
-        # We try to find the PNG in the double-nested folder Flutter loves
-        target_logo = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
-        if os.path.isfile(target_logo):
-            return FileResponse(target_logo, media_type="image/png")
-    # ----------------------------
+    # --- THE ULTIMATE LOGO INTERCEPTOR ---
+    # Even if Render is "stuck" asking for .jpg, this forces it to send the .png
+    if "msu_logo" in full_path.lower():
+        # Look for the physical PNG file on the Render disk
+        logo_path = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
+        if os.path.isfile(logo_path):
+            return FileResponse(logo_path, media_type="image/png")
+    # -------------------------------------
 
-    # 1. Define the paths
+    # Standard path checks
     file_path = os.path.join(FRONTEND_DIR, full_path)
     nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
 
-    # 2. Check standard path
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # 3. Check nested path
     if "assets/" in full_path and os.path.isfile(nested_path):
         return FileResponse(nested_path)
 
-    # 4. Fallback
+    # Fallback to SPA entry point
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
