@@ -58,7 +58,6 @@
 #         return FileResponse(index_file)
     
 #     return {"error": "Frontend build not found."}
-
 import os
 import mimetypes
 from fastapi import FastAPI
@@ -70,7 +69,7 @@ from routes.guidance import router as guidance_router
 from routes.admin import router as admin_router
 
 # 1. FIX MIME TYPES
-# This prevents the "text/html" error that causes white screens in browsers
+# Ensures the browser treats JavaScript and modules correctly to avoid white screens
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
 
@@ -94,7 +93,7 @@ def health_check():
     return {"status": "API is online"}
 
 # 4. PATH LOGIC
-# Detects the directory where main.py lives and looks for the frontend build
+# Locates the frontend build directory relative to this main.py file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
 
@@ -102,28 +101,30 @@ FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "bui
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
+# 6. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # 1. Prevent API routes from being handled here
+    # Prevent API routes from being handled as static files
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # 2. Check the standard path first (for .js and .html files)
+    # Attempt 1: Check the standard path (main.dart.js, index.html, etc.)
     file_path = os.path.join(FRONTEND_DIR, full_path)
     
-    # 3. THE LOGO FIX: Handle the Flutter 'Double Assets' folder
-    # If the file isn't found and the path includes "assets/", look one level deeper
+    # Attempt 2: Handle the Flutter 'Double Assets' folder quirk
+    # Flutter Web often places assets in /assets/assets/ instead of just /assets/
     if not os.path.exists(file_path) and "assets/" in full_path:
-        # This changes 'assets/msu_logo.jpg' to 'assets/assets/msu_logo.jpg'
+        # If full_path is 'assets/msu_logo.png', try 'assets/assets/msu_logo.png'
         relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
         file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
 
+    # If the file exists after both attempts, serve it
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # 4. Fallback to index.html for Single Page App routing
+    # Fallback: Serve index.html for Single Page App (SPA) routing
     index_file = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
     
-    return {"error": "File not found."}
+    return {"error": "File not found. Verify your frontend build exists."}

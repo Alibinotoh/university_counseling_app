@@ -36,8 +36,8 @@ class ProfileModule extends StatelessWidget {
             Text(adminData['name'] ?? "Counselor", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             Text(adminData['email'] ?? "admin@msu.edu", style: TextStyle(color: colorSlateText)),
             const Divider(height: 40),
-            _profileTile(Icons.security, "Security Settings"),
-            _profileTile(Icons.notifications_active_outlined, "Notifications"),
+            _profileTile(Icons.security, "Security Settings (Coming soon!)"),
+            _profileTile(Icons.notifications_active_outlined, "Notifications (Coming soon!)"),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
