@@ -300,11 +300,16 @@ class _LandingPageState extends State<LandingPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // --- LOGO (White circle removed) ---
-                    Image.asset(
-                      'assets/msu_logo.png', 
-                      height: 140, // Slightly larger since the white ring is gone
+                    // --- REPLACE YOUR OLD LOGO CODE WITH THIS ---
+                    Container(
+                      height: 140,
                       width: 140,
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/msu_logo.png'),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text("Guidance and Counseling", style: TextStyle(color: Colors.white, fontSize: 24)),

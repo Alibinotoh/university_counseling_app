@@ -101,30 +101,22 @@ FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "bui
 if os.path.exists(FRONTEND_DIR):
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# 6. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # Attempt 1: Standard Join
+    # 1. Define the paths
     file_path = os.path.join(FRONTEND_DIR, full_path)
-    
-    # Attempt 2: The "Guaranteed Hunt" for the logo
-    if "msu_logo.png" in full_path:
-        # We know exactly where Flutter puts this on the Linux disk:
-        # build/web/assets/assets/msu_logo.png
-        absolute_logo_path = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
-        if os.path.isfile(absolute_logo_path):
-            return FileResponse(absolute_logo_path, media_type="image/png")
+    nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
 
-    # Attempt 3: Double Asset Fix for other files (background, etc.)
-    if not os.path.exists(file_path) and "assets/" in full_path:
-        relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
-        file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
-
+    # 2. Check standard path
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # Fallback to index.html
+    # 3. Check nested path (THE LOGO FIX)
+    if "assets/" in full_path and os.path.isfile(nested_path):
+        return FileResponse(nested_path)
+
+    # 4. Fallback
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
