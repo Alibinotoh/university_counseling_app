@@ -65,16 +65,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from routes.guidance import router as guidance_router
-from routes.admin import router as admin_router
-
-# 1. FIX MIME TYPES
+# 1. FORCE MIME TYPES BEFORE APP STARTS
+mimetypes.init()
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
+mimetypes.add_type("image/png", ".png")
 
 app = FastAPI(title="MSU Guidance System")
 
-# 2. CORS CONFIGURATION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -83,45 +81,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. API ROUTES
-app.include_router(guidance_router, prefix="/api/v1")
-app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
-
-@app.get("/api/v1/health")
-def health_check():
-    return {"status": "API is online"}
-
-# 4. PATH LOGIC
+# 2. BETTER PATH LOGIC
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# On Render, the build folder is one level up from the backend folder
 FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
-
-# 5. STATIC FILES MOUNT
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
-    # --- THE ULTIMATE LOGO INTERCEPTOR ---
-    # Even if Render is "stuck" asking for .jpg, this forces it to send the .png
+    # --- LOGO INTERCEPTOR ---
     if "msu_logo" in full_path.lower():
-        # Look for the physical PNG file on the Render disk
         logo_path = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
         if os.path.isfile(logo_path):
             return FileResponse(logo_path, media_type="image/png")
-    # -------------------------------------
 
-    # Standard path checks
     file_path = os.path.join(FRONTEND_DIR, full_path)
-    nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
 
+    # Serve existing files (JS, CSS, etc.)
     if os.path.isfile(file_path):
+        # Manually set JS content type to avoid the white screen error
+        if file_path.endswith(".js") or file_path.endswith(".mjs"):
+            return FileResponse(file_path, media_type="application/javascript")
         return FileResponse(file_path)
     
+    # Handle Flutter's double-nesting for other assets
+    nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
     if "assets/" in full_path and os.path.isfile(nested_path):
         return FileResponse(nested_path)
 
-    # Fallback to SPA entry point
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    # 3. THE SPA FALLBACK
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.isfile(index_file):
+        return FileResponse(index_file)
+    
+    return {"error": "Frontend build not found at " + FRONTEND_DIR}
