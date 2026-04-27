@@ -58,6 +58,7 @@
 #         return FileResponse(index_file)
     
 #     return {"error": "Frontend build not found."}
+
 import os
 import mimetypes
 from fastapi import FastAPI
@@ -68,15 +69,14 @@ from fastapi.responses import FileResponse
 from routes.guidance import router as guidance_router
 from routes.admin import router as admin_router
 
-# 1. FORCE MIME TYPES
-# This prevents the browser from rejecting your JS files as "text/html"
-mimetypes.init()
+# 1. FIX MIME TYPES
+# This prevents the "text/html" error that causes white screens in browsers
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
-mimetypes.add_type("image/png", ".png")
 
 app = FastAPI(title="MSU Guidance System")
 
+# 2. CORS CONFIGURATION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -85,7 +85,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 2. API ROUTES
+# 3. API ROUTES (Must remain above the SPA handler)
 app.include_router(guidance_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 
@@ -93,58 +93,37 @@ app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 def health_check():
     return {"status": "API is online"}
 
-# 3. ROBUST PATH RESOLUTION
-# This version uses the actual working directory of the Render process
-BASE_DIR = os.getcwd() 
+# 4. PATH LOGIC
+# Detects the directory where main.py lives and looks for the frontend build
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
 
-# Primary Path: Project Root -> frontend/build/web
-FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "frontend", "build", "web"))
+# 5. STATIC FILES MOUNT
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-# Fallback: If Render is running from /backend instead of /
-if not os.path.exists(os.path.join(FRONTEND_DIR, "index.html")):
-    FRONTEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
-
-# --- DIAGNOSTIC LOGS (Check these in Render Console!) ---
-print(f"--- DIAGNOSTIC: Current Working Directory: {BASE_DIR}")
-print(f"--- DIAGNOSTIC: Looking for index.html at: {FRONTEND_DIR}/index.html")
-print(f"--- DIAGNOSTIC: Does it exist? {os.path.exists(os.path.join(FRONTEND_DIR, 'index.html'))}")
-
-# 4. SAFE STATIC ASSETS MOUNT
-ASSETS_DIR = os.path.join(FRONTEND_DIR, "assets")
-if os.path.exists(ASSETS_DIR):
-    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
-else:
-    print(f"--- WARNING: Assets directory not found at {ASSETS_DIR} ---")
-
-# 5. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
+    # 1. Prevent API routes from being handled here
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
-
-    # --- LOGO INTERCEPTOR ---
-    if "msu_logo" in full_path.lower():
-        logo_options = [
-            os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png"),
-            os.path.join(FRONTEND_DIR, "assets", "msu_logo.png"),
-        ]
-        for path in logo_options:
-            if os.path.isfile(path):
-                return FileResponse(path, media_type="image/png")
-
+        
+    # 2. Check the standard path first (for .js and .html files)
     file_path = os.path.join(FRONTEND_DIR, full_path)
-
-    # 6. SERVE ACTUAL FILES WITH EXPLICIT MIME TYPES
-    if os.path.isfile(file_path):
-        if file_path.endswith(".js") or file_path.endswith(".mjs"):
-            # This is the line that kills the "MIME type" error
-            return FileResponse(file_path, media_type="application/javascript")
-        return FileResponse(file_path)
-
-    # 7. FINAL FALLBACK (Serve index.html)
-    index_path = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.isfile(index_path):
-        return FileResponse(index_path)
     
-    return {"error": "Frontend build not found.", "checked_path": FRONTEND_DIR}
+    # 3. THE LOGO FIX: Handle the Flutter 'Double Assets' folder
+    # If the file isn't found and the path includes "assets/", look one level deeper
+    if not os.path.exists(file_path) and "assets/" in full_path:
+        # This changes 'assets/msu_logo.jpg' to 'assets/assets/msu_logo.jpg'
+        relative_asset_path = full_path.replace("assets/", "assets/assets/", 1)
+        file_path = os.path.join(FRONTEND_DIR, relative_asset_path)
+
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    # 4. Fallback to index.html for Single Page App routing
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    
+    return {"error": "File not found."}
