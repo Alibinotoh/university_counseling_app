@@ -69,7 +69,6 @@ from routes.guidance import router as guidance_router
 from routes.admin import router as admin_router
 
 # 1. FIX MIME TYPES
-# Ensures the browser treats JavaScript and modules correctly to avoid white screens
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
 
@@ -84,7 +83,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. API ROUTES (Must remain above the SPA handler)
+# 3. API ROUTES
 app.include_router(guidance_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 
@@ -93,7 +92,6 @@ def health_check():
     return {"status": "API is online"}
 
 # 4. PATH LOGIC
-# Locates the frontend build directory relative to this main.py file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.normpath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
 
@@ -106,6 +104,15 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
         
+    # --- NEW LOGO ALIAS LOGIC ---
+    # Even if the browser is old and asks for .jpg, we serve the .png
+    if "msu_logo" in full_path:
+        # We try to find the PNG in the double-nested folder Flutter loves
+        target_logo = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
+        if os.path.isfile(target_logo):
+            return FileResponse(target_logo, media_type="image/png")
+    # ----------------------------
+
     # 1. Define the paths
     file_path = os.path.join(FRONTEND_DIR, full_path)
     nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
@@ -114,7 +121,7 @@ async def serve_spa(full_path: str):
     if os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # 3. Check nested path (THE LOGO FIX)
+    # 3. Check nested path
     if "assets/" in full_path and os.path.isfile(nested_path):
         return FileResponse(nested_path)
 
