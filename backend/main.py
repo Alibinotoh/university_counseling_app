@@ -94,24 +94,23 @@ def health_check():
     return {"status": "API is online"}
 
 # 3. ROBUST PATH RESOLUTION
-# This handles the different ways Render and Localhost view the project root
+# This version uses the actual working directory of the Render process
 BASE_DIR = os.getcwd() 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Primary Path: Project Root -> frontend/build/web
 FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "frontend", "build", "web"))
 
-# Fallback: One level up from backend -> frontend/build/web
+# Fallback: If Render is running from /backend instead of /
 if not os.path.exists(os.path.join(FRONTEND_DIR, "index.html")):
     FRONTEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "frontend", "build", "web"))
 
-# DIAGNOSTIC LOGS: Check these in your Render console to see where the files are
+# --- DIAGNOSTIC LOGS (Check these in Render Console!) ---
 print(f"--- DIAGNOSTIC: Current Working Directory: {BASE_DIR}")
 print(f"--- DIAGNOSTIC: Looking for index.html at: {FRONTEND_DIR}/index.html")
 print(f"--- DIAGNOSTIC: Does it exist? {os.path.exists(os.path.join(FRONTEND_DIR, 'index.html'))}")
 
 # 4. SAFE STATIC ASSETS MOUNT
-# Wrapping in os.path.exists prevents the 'RuntimeError' crash
 ASSETS_DIR = os.path.join(FRONTEND_DIR, "assets")
 if os.path.exists(ASSETS_DIR):
     app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
@@ -129,7 +128,6 @@ async def serve_spa(full_path: str):
         logo_options = [
             os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png"),
             os.path.join(FRONTEND_DIR, "assets", "msu_logo.png"),
-            os.path.join(FRONTEND_DIR, "msu_logo.png")
         ]
         for path in logo_options:
             if os.path.isfile(path):
@@ -140,16 +138,11 @@ async def serve_spa(full_path: str):
     # 6. SERVE ACTUAL FILES WITH EXPLICIT MIME TYPES
     if os.path.isfile(file_path):
         if file_path.endswith(".js") or file_path.endswith(".mjs"):
-            # This is the critical line that fixes the White Screen
+            # This is the line that kills the "MIME type" error
             return FileResponse(file_path, media_type="application/javascript")
         return FileResponse(file_path)
 
-    # 7. DOUBLE-NESTED ASSET FALLBACK
-    nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
-    if "assets/" in full_path and os.path.isfile(nested_path):
-        return FileResponse(nested_path)
-
-    # 8. FINAL FALLBACK (Serve index.html)
+    # 7. FINAL FALLBACK (Serve index.html)
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
