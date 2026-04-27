@@ -72,6 +72,7 @@ from routes.admin import router as admin_router
 mimetypes.init()
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("application/javascript", ".mjs")
+mimetypes.add_type("image/png", ".png")
 
 app = FastAPI(title="MSU Guidance System")
 
@@ -87,44 +88,58 @@ app.add_middleware(
 app.include_router(guidance_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["Admin"])
 
+@app.get("/api/v1/health")
+def health_check():
+    return {"status": "API is online"}
+
 # 3. ABSOLUTE PATH RESOLUTION
-# This finds the 'university_counseling_app' root folder regardless of where it's run
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # /backend
 ROOT_DIR = os.path.dirname(CURRENT_DIR) # /university_counseling_app
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend", "build", "web")
 
-# 4. STATIC ASSETS MOUNT
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+# 4. SAFE STATIC ASSETS MOUNT
+# Wrapping this in a check prevents the 'RuntimeError' crash if the folder is missing
+ASSETS_DIR = os.path.join(FRONTEND_DIR, "assets")
+if os.path.exists(ASSETS_DIR):
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+else:
+    print(f"--- WARNING: Assets directory not found at {ASSETS_DIR} ---")
 
+# 5. SPA & ASSET HANDLER
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return {"detail": "Not Found"}, 404
 
-    # --- LOGO INTERCEPTOR ---
+    # --- IMPROVED LOGO INTERCEPTOR ---
+    # We check multiple possible locations to break the .jpg/.png loop
     if "msu_logo" in full_path.lower():
-        # Look for the double-nested asset Flutter creates
-        logo_path = os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png")
-        if os.path.isfile(logo_path):
-            return FileResponse(logo_path, media_type="image/png")
+        logo_options = [
+            os.path.join(FRONTEND_DIR, "assets", "assets", "msu_logo.png"), # Double nested
+            os.path.join(FRONTEND_DIR, "assets", "msu_logo.png"),           # Single nested
+            os.path.join(FRONTEND_DIR, "msu_logo.png")                     # Web root
+        ]
+        for path in logo_options:
+            if os.path.isfile(path):
+                return FileResponse(path, media_type="image/png")
 
     file_path = os.path.join(FRONTEND_DIR, full_path)
 
-    # Serve JS files with explicit MIME type to kill the White Screen
+    # 6. SERVE ACTUAL FILES (JS/CSS/WASM)
     if os.path.isfile(file_path):
+        # Manually set MIME type for JS to prevent White Screen on Render
         if file_path.endswith(".js") or file_path.endswith(".mjs"):
             return FileResponse(file_path, media_type="application/javascript")
         return FileResponse(file_path)
 
-    # Double-nested asset fallback for Flutter
+    # 7. DOUBLE-NESTED ASSET FALLBACK
     nested_path = os.path.join(FRONTEND_DIR, full_path.replace("assets/", "assets/assets/", 1))
     if "assets/" in full_path and os.path.isfile(nested_path):
         return FileResponse(nested_path)
 
-    # FINAL FALLBACK (Serve index.html)
+    # 8. FINAL FALLBACK (Serve index.html)
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
     
-    return {"error": "Frontend build not found. Verify build path."}
+    return {"error": "Frontend build not found.", "checked_path": FRONTEND_DIR}
